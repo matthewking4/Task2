@@ -1,40 +1,57 @@
 #pragma once
-#include <string>
-#include <iostream>
 #include "pch.h"
 #include "stdafx.h"
+#include <string>
+#include <iostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "iostream"
-#include <functional>
-
 using namespace std;
 
 class Comms {
 public:
-	string message = "";
-	string lastSender = "";
-	//template<typename B>
-	//void sendSocket(SOCKET socket, B* params, int sendByteCount, std::function<void> callback) {
-	//	if (socket != INVALID_SOCKET) {
-	//		sendByteCount = send(socket, (char *)params->inst, params->sizeOf, 0);
-	//		if (sendByteCount == SOCKET_ERROR) {
-	//			cout << "Server send error " << WSAGetLastError() << endl;
-	//			closesocket(socket);
-	//		}
-	//		else {
-	//			callback(params->name);
-	//		}
-	//	}
-	//}
+	Comms(int portNumb, string ipAddr){
+		this->setPort(portNumb);
+		this->setAddr(ipAddr);
+	}
+	~Comms() {
 
+	}
+	string message = "";
+	bool terminate = false;
+
+	//Setters
+	virtual void setPort(int portNumb);
+	virtual void setAddr(string ipAddr);
+	
+	//Getters
+	virtual int getPort();
+	virtual string getAddr();
+
+	//Intilisation Methods
+	virtual int DLLFinder();
+	virtual SOCKET setupSocket();
+	virtual sockaddr_in setupService(int port, string ipAddr);
+
+	//Templated receiving socket
 	template<typename T>
-	void recvSocket(SOCKET socket, T params, int recvByteCount) {
-		if (socket != INVALID_SOCKET) {
-			recvByteCount = recv(socket, (char *)params.inst, params.sizeOf, 0);
+	void recvSocket(SOCKET socket, T params, int recvByteCount);
+
+	//Shared Teardown
+	virtual int destroy(SOCKET socket);
+
+private:
+	int port;
+	string ip;
+};
+
+template<typename T>
+inline void Comms::recvSocket(SOCKET socket, T params, int recvByteCount) {
+	if (socket != INVALID_SOCKET) {
+		recvByteCount = recv(socket, (char *)params.inst, params.sizeOf, 0);
 		if (recvByteCount == SOCKET_ERROR) {
-			cout << "Server send error " << WSAGetLastError() << endl;
+			cout << "send error " << WSAGetLastError() << endl;
 			closesocket(socket);
+			exit(0);
 		}
 		else {
 			if (params.inst->message != "") {
@@ -42,7 +59,5 @@ public:
 
 			}
 		}
-		}
 	}
-private:
-};
+}

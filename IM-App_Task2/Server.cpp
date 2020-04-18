@@ -1,96 +1,92 @@
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include "iostream"
 #include "Server.h"
-#include "pch.h"
-#include "stdafx.h"
-
-int Server::Main() {
-	SOCKADDR_STORAGE from;
-	int retval, fromlen, socket_type;
-	char servstr[NI_MAXSERV], hoststr[NI_MAXHOST];
 
 
-	SOCKET serverSocket, acceptSocket;
-	int port = 55555;
-	WSADATA wsaData;
-	int wsaerr;
-	WORD wVersionRequested = MAKEWORD(2, 2);
-	wsaerr = WSAStartup(wVersionRequested, &wsaData);
-	if (wsaerr != 0) {
-		//need to do error handling
-		cout << "ERROR: The Winsock dll not found!" << endl;
-		return 0;
-	}
-	else {
-		//cout << "The Winsock dll found!" << endl;
-		//cout << "The status: " << wsaData.szSystemStatus << endl;
-	}
-
-	serverSocket = INVALID_SOCKET;
-	serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (serverSocket == INVALID_SOCKET) {
-		//need to do error handling
-		cout << "Error at socket(): " << WSAGetLastError() << endl;
-		WSACleanup();
-		return 0;
-	}
-	else {
-		//cout << "socket() is OK!" << endl;
-	}
-
-
+int Server::Connect() {
+	PARAMETERS params;
 	sockaddr_in service;
-	service.sin_family = AF_INET;
-	InetPton(AF_INET, _T("127.0.0.1"), &service.sin_addr.s_addr);
-	service.sin_port = htons(port);
+	SOCKET serverSocket;
+
+	int port = this->getPort();
+	string addr = this->getAddr();
+
+	this->DLLFinder();
+	serverSocket = this->setupSocket();
+	service = this->setupService(port, addr);
+
 	if (::bind(serverSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
-		//need to do error handling
 		cout << "bind() failed: " << WSAGetLastError() << endl;
 		closesocket(serverSocket);
 		WSACleanup();
 		return 0;
 	}
-	else {
-		//cout << "bind() is OK!" << endl;
-	}
 
-	if (listen(serverSocket, 1) == SOCKET_ERROR)
-		cout << "listen(): Error listening on socket " << WSAGetLastError() << endl;
-	else
-		cout << "Waiting for a client to connect..." << endl;
-	Server server;
-	PARAMETERS params;
+	this->connectionListen(serverSocket);
+	SOCKET acceptSocket = this->acceptConnection(serverSocket);
 
-	DWORD threadId;
-	acceptSocket = accept(serverSocket, NULL, NULL);
-	if (acceptSocket == INVALID_SOCKET) {
-		//need to do error handling
-		cout << stderr << " accept failed: " << WSAGetLastError() << endl;
-		return -1;
-	}
-	else {
-		cout << "You've connected to a client. Please enter a display name." << endl;
-		cin >> server.name;
+	cout << "You've connected to a client. Please enter a display name: ";
+	cin >> this->name;
 
-		params.socket = (LPVOID)acceptSocket;
-		params.inst = &server;
-		params.sizeOf = sizeof(Server);
-		params.name = server.name;
+	params.socket = (LPVOID)acceptSocket;
+	params.inst = this;
+	params.sizeOf = sizeof(Server);
+	params.name = this->name;
+	params.port = port;
+	params.ipAddr = addr;
+	CreateThread(NULL, 0, this->ServerThreadedSender, &params, 0, 0);
 
-		CreateThread(NULL, 0, server.ServerThreadedSender, &params, 0, &threadId);
-	}
 
 	int recvByteCount = 0;
 	while (true) {
 		Sleep(500);
-		server.recvSocket<PARAMETERS>((SOCKET)params.socket, params, recvByteCount);
+		this->recvSocket<PARAMETERS>((SOCKET)params.socket, params, recvByteCount);
 	}
-	closesocket((SOCKET)params.socket);
 
-	system("pause");
-	WSACleanup();
-
-
-	return 0;
+	return this->destroy((SOCKET)params.socket);
 }
+
+
+void Server::connectionListen(SOCKET socket)
+{
+	if (listen(socket, 1) == SOCKET_ERROR) {
+		cout << "listen(): Error listening on socket " << WSAGetLastError() << endl;
+	}
+	else {
+		cout << "Waiting for a client to connect..." << endl;
+	}
+}
+
+
+int Server::acceptConnection(SOCKET socket)
+{
+	SOCKET accpt = accept(socket, NULL, NULL);
+	if (accpt == INVALID_SOCKET) {
+		cout << stderr << " accept failed: " << WSAGetLastError() << endl;
+		return -1;
+	}
+	return accpt;
+}
+
+
+DWORD WINAPI Server::ServerThreadedSender(void * param)
+{
+	PARAMETERS* params = (PARAMETERS*)param;
+	SOCKET socket = (SOCKET)params->socket;
+	Server server(params->port, params->ipAddr);
+	int sendByteCount = 0;
+	while (true) {
+		Sleep(500);
+		sendByteCount = send(socket, (char *)&server, sizeof(Server), 0);
+		if (sendByteCount == SOCKET_ERROR) {
+			cout << "Server send error " << WSAGetLastError() << endl;
+			closesocket(socket);
+			return -1;
+		}
+		else {
+			string msg;
+			cin >> msg;
+			server.message = params->name + ": " + msg;
+		}
+	}
+	closesocket(socket);
+	return 0;
+};
