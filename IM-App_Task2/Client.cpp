@@ -51,10 +51,9 @@ int Client::Main() {
 		params.socket = (LPVOID)clientSocket;
 		params.inst = &client;
 		params.sizeOf = sizeof(Client);
-
-		CreateThread(NULL, 0, ThreadedSender<PARAMETERS>, &params, 0, &threadId);
+		params.name = client.name;
+		CreateThread(NULL, 0, client.ClientThreadedSender, &params, 0, &threadId);
 	}
-
 
 
 	int recvByteCount = 0;

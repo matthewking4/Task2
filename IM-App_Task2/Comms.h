@@ -6,51 +6,27 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "iostream"
+#include <functional>
 
 using namespace std;
-
-template<typename B>
-DWORD WINAPI ThreadedSender(void* param) {
-	B* params = (B*)param;
-	SOCKET socket = (SOCKET)params->socket;
-	int sendByteCount = 0;
-	while (true) {
-		Sleep(500);
-		sendByteCount = send(socket, (char *)params->inst, params->sizeOf, 0);
-		if (sendByteCount == SOCKET_ERROR) {
-			cout << "Server send error " << WSAGetLastError() << endl;
-			closesocket(socket);
-			return -1;
-		}
-		else {
-			cin >> params->inst->message;
-
-		}
-	}
-	closesocket(socket);
-	return 0;
-}
-
-
 
 class Comms {
 public:
 	string message = "";
 	string lastSender = "";
-	/*template<typename T>
-	void sendSocket(SOCKET socket, T params, int sendByteCount) {
-		if (socket != INVALID_SOCKET) {
-			sendByteCount = send(socket, (char *)params->inst, params->sizeOf, 0);
-			if (sendByteCount == SOCKET_ERROR) {
-				cout << "Server send error " << WSAGetLastError() << endl;
-				closesocket(socket);
-				return -1;
-			}
-			else {
-				cin >> params->inst->message;
-			}
-		}
-	}*/
+	//template<typename B>
+	//void sendSocket(SOCKET socket, B* params, int sendByteCount, std::function<void> callback) {
+	//	if (socket != INVALID_SOCKET) {
+	//		sendByteCount = send(socket, (char *)params->inst, params->sizeOf, 0);
+	//		if (sendByteCount == SOCKET_ERROR) {
+	//			cout << "Server send error " << WSAGetLastError() << endl;
+	//			closesocket(socket);
+	//		}
+	//		else {
+	//			callback(params->name);
+	//		}
+	//	}
+	//}
 
 	template<typename T>
 	void recvSocket(SOCKET socket, T params, int recvByteCount) {
@@ -62,7 +38,7 @@ public:
 		}
 		else {
 			if (params.inst->message != "") {
-				cout <<  "Last Message:  " << params.inst->message << endl;
+				cout << params.inst->message << endl;
 
 			}
 		}

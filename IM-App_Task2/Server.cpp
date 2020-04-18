@@ -44,7 +44,7 @@ int Server::Main() {
 	service.sin_family = AF_INET;
 	InetPton(AF_INET, _T("127.0.0.1"), &service.sin_addr.s_addr);
 	service.sin_port = htons(port);
-	if (bind(serverSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
+	if (::bind(serverSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
 		//need to do error handling
 		cout << "bind() failed: " << WSAGetLastError() << endl;
 		closesocket(serverSocket);
@@ -76,8 +76,9 @@ int Server::Main() {
 		params.socket = (LPVOID)acceptSocket;
 		params.inst = &server;
 		params.sizeOf = sizeof(Server);
+		params.name = server.name;
 
-		CreateThread(NULL, 0, ThreadedSender<PARAMETERS>, &params, 0, &threadId);
+		CreateThread(NULL, 0, server.ServerThreadedSender, &params, 0, &threadId);
 	}
 
 	int recvByteCount = 0;

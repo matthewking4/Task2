@@ -5,7 +5,7 @@
 #include <windows.h>
 #include <iostream>
 
-#define SERVER false
+#define SERVER true
 
 using namespace std;
 
