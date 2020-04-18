@@ -1,8 +1,8 @@
 #pragma once
+#include <string>
 #include <iostream>
 #include "Comms.h"
 #include "pch.h"
-#include <type_traits>
 
 using namespace std;
 
@@ -13,6 +13,7 @@ public:
 	~Server() {
 	};
 	int Main();
+	string name;
 	struct PARAMETERS
 	{
 		LPVOID socket;

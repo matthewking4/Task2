@@ -70,23 +70,22 @@ int Server::Main() {
 		return -1;
 	}
 	else {
+		cout << "You've connected to a client. Please enter a display name." << endl;
+		cin >> server.name;
+
 		params.socket = (LPVOID)acceptSocket;
 		params.inst = &server;
 		params.sizeOf = sizeof(Server);
 
-		cout << "Server: Client Connected!" << endl;
-		CreateThread(NULL, 0, ThreadSender<PARAMETERS>, &params, 0, &threadId);
+		CreateThread(NULL, 0, ThreadedSender<PARAMETERS>, &params, 0, &threadId);
 	}
 
+	int recvByteCount = 0;
 	while (true) {
-		SOCKET socket = (SOCKET)(LPVOID)acceptSocket;
-		int byteCount;
-		while (1) {
-			cout << "Last Message:  " << server.message << endl;
-			Sleep(500);
-			server.recvSocket<PARAMETERS>((SOCKET)params.socket, params);
-		}
+		Sleep(500);
+		server.recvSocket<PARAMETERS>((SOCKET)params.socket, params, recvByteCount);
 	}
+	closesocket((SOCKET)params.socket);
 
 	system("pause");
 	WSACleanup();

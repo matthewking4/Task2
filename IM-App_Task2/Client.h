@@ -1,9 +1,11 @@
 #pragma once
+#include <string>
 #include <iostream>
 #include "Comms.h"
 #include "pch.h"
 
 using namespace std;
+
 
 class Client : public Comms{
 public:
@@ -12,6 +14,7 @@ public:
 	~Client() {
 	};
 	int Main();
+	string name;
 	struct PARAMETERS
 	{
 		LPVOID socket;

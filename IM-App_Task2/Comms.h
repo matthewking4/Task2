@@ -10,13 +10,22 @@
 using namespace std;
 
 template<typename B>
-DWORD WINAPI ThreadSender(void* param) {
+DWORD WINAPI ThreadedSender(void* param) {
 	B* params = (B*)param;
 	SOCKET socket = (SOCKET)params->socket;
-	int byteCount;
+	int sendByteCount = 0;
 	while (true) {
 		Sleep(500);
-		comms.sendSocket((SOCKET)params->socket, params, byteCount)
+		sendByteCount = send(socket, (char *)params->inst, params->sizeOf, 0);
+		if (sendByteCount == SOCKET_ERROR) {
+			cout << "Server send error " << WSAGetLastError() << endl;
+			closesocket(socket);
+			return -1;
+		}
+		else {
+			cin >> params->inst->message;
+
+		}
 	}
 	closesocket(socket);
 	return 0;
@@ -26,11 +35,9 @@ DWORD WINAPI ThreadSender(void* param) {
 
 class Comms {
 public:
-	string hostName = "";
-	string clientName = "";
-	string message;
-
-	template<typename T>
+	string message = "";
+	string lastSender = "";
+	/*template<typename T>
 	void sendSocket(SOCKET socket, T params, int sendByteCount) {
 		if (socket != INVALID_SOCKET) {
 			sendByteCount = send(socket, (char *)params->inst, params->sizeOf, 0);
@@ -43,7 +50,7 @@ public:
 				cin >> params->inst->message;
 			}
 		}
-	}
+	}*/
 
 	template<typename T>
 	void recvSocket(SOCKET socket, T params, int recvByteCount) {
@@ -54,7 +61,10 @@ public:
 			closesocket(socket);
 		}
 		else {
-			cout << "Last Message:  " << params.inst->message << endl;
+			if (params.inst->message != "") {
+				cout <<  "Last Message:  " << params.inst->message << endl;
+
+			}
 		}
 		}
 	}

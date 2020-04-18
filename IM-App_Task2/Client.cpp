@@ -46,17 +46,18 @@ int Client::Main() {
 		return 0;
 	}
 	else {
-		cout << "Client: connecting to a host" << endl;
+		cout << "You've connected to a host. Please enter a display name." << endl;
+		cin >> client.name;
 		params.socket = (LPVOID)clientSocket;
 		params.inst = &client;
 		params.sizeOf = sizeof(Client);
 
-		CreateThread(NULL, 0, ThreadSender<PARAMETERS>, &params, 0, &threadId);
+		CreateThread(NULL, 0, ThreadedSender<PARAMETERS>, &params, 0, &threadId);
 	}
 
 
 
-	int recvByteCount;
+	int recvByteCount = 0;
 	while (true) {
 		Sleep(500);
 		client.recvSocket<PARAMETERS>((SOCKET)params.socket, params, recvByteCount);
