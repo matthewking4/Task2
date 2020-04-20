@@ -12,7 +12,7 @@ int Client::Connect() {
 	service = this->setupService(port, addr);
 	this->establishConnection(clientSocket, service);
 
-	cout << "You've connected to a client. Please enter a display name: ";
+	cout << "You've connected to a host. Please enter a display name: ";
 	cin >> this->name;
 
 

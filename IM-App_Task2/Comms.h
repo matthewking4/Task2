@@ -19,10 +19,6 @@ public:
 	}
 	string message = "";
 	bool terminate = false;
-
-	//Setters
-	virtual void setPort(int portNumb);
-	virtual void setAddr(string ipAddr);
 	
 	//Getters
 	virtual int getPort();
@@ -41,6 +37,10 @@ public:
 	virtual int destroy();
 
 private:
+	//Setters
+	void setPort(int portNumb);
+	void setAddr(string ipAddr);
+
 	int port;
 	string ip;
 };
@@ -51,8 +51,9 @@ inline void Comms::recvSocket(T parameters, int recvByteCount) {
 	if (socket != INVALID_SOCKET) {
 		recvByteCount = recv(socket, (char *)parameters.inst, parameters.sizeOf, 0);
 		if (recvByteCount == SOCKET_ERROR) {
-			cout << "send error " << WSAGetLastError() << endl;
+			 WSAGetLastError()
 			closesocket(socket);
+			throw SocketErrorException();
 			exit(0);
 		}
 		else {

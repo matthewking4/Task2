@@ -15,7 +15,7 @@ int Server::Connect() {
 	if (::bind(serverSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
 		closesocket(serverSocket);
 		WSACleanup();
-		throw SocketListenException();
+		throw BindingException();
 		return 0;
 	}
 

@@ -3,12 +3,6 @@
 #include "Client.h"
 using namespace std;
 
-
-
-/*
-
-
-*/
 int main() {
 	int portNumb;
 	string ipAddr;
