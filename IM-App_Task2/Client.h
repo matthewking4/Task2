@@ -6,12 +6,12 @@ using namespace std;
 class Client : public Comms{
 public:
 	Client(int portNumb, string ipAddr) : Comms(portNumb, ipAddr) {
-
+		// Required for inhertiance. 
 	};
 	int Connect();
 private:
 	string name;
-	int establishConnection(SOCKET socket, sockaddr_in service);
+	void establishConnection(SOCKET socket, sockaddr_in service);
 	static DWORD WINAPI ClientThreadedSender(void* param);
 	struct PARAMETERS
 	{

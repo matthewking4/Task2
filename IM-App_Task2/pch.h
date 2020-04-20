@@ -9,6 +9,7 @@
 #ifndef PCH_H
 #define PCH_H
 #pragma comment(lib, "Ws2_32.lib")
+#define SERVER false
 
 // TODO: add headers that you want to pre-compile here
 

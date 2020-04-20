@@ -5,6 +5,7 @@
 #include <iostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include "Exceptions.h"
 using namespace std;
 
 class Comms {
@@ -28,16 +29,16 @@ public:
 	virtual string getAddr();
 
 	//Intilisation Methods
-	virtual int DLLFinder();
-	virtual SOCKET setupSocket();
+	virtual void WinsockSetup();
+	virtual SOCKET socketSetup();
 	virtual sockaddr_in setupService(int port, string ipAddr);
 
 	//Templated receiving socket
 	template<typename T>
-	void recvSocket(SOCKET socket, T params, int recvByteCount);
+	void recvSocket(T parameters, int recvByteCount);
 
 	//Shared Teardown
-	virtual int destroy(SOCKET socket);
+	virtual int destroy();
 
 private:
 	int port;
@@ -45,17 +46,18 @@ private:
 };
 
 template<typename T>
-inline void Comms::recvSocket(SOCKET socket, T params, int recvByteCount) {
+inline void Comms::recvSocket(T parameters, int recvByteCount) {
+	SOCKET socket = (SOCKET)parameters.socket;
 	if (socket != INVALID_SOCKET) {
-		recvByteCount = recv(socket, (char *)params.inst, params.sizeOf, 0);
+		recvByteCount = recv(socket, (char *)parameters.inst, parameters.sizeOf, 0);
 		if (recvByteCount == SOCKET_ERROR) {
 			cout << "send error " << WSAGetLastError() << endl;
 			closesocket(socket);
 			exit(0);
 		}
 		else {
-			if (params.inst->message != "") {
-				cout << params.inst->message << endl;
+			if (parameters.inst->message != "") {
+				cout << parameters.inst->message << endl;
 
 			}
 		}

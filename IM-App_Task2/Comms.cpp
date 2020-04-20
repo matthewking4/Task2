@@ -1,4 +1,4 @@
-#include "Comms.h"
+﻿#include "Comms.h"
 
 void Comms::setPort(int portNumb)
 {
@@ -20,36 +20,34 @@ string Comms::getAddr()
 	return ip;
 }
 
-int Comms::DLLFinder()
+void Comms::WinsockSetup()
 {
 	WSADATA wsaData;
 	int wsaerr;
 	WORD wVersionRequested = MAKEWORD(2, 2);
 	wsaerr = WSAStartup(wVersionRequested, &wsaData);
 	if (wsaerr != 0) {
-		//need to do error handling
-		cout << "ERROR: The Winsock dll not found!" << endl;
-		return 0;
+		
+		throw WINSOCKFoundException();
 	}
 	else {
-		return 1;
-		//cout << "The Winsock dll found!" << endl;
-		//cout << "The status: " << wsaData.szSystemStatus << endl;
+		cout << "The Winsock dll found!" << endl;
 	}
 }
 
 
-SOCKET Comms::setupSocket()
+SOCKET Comms::socketSetup()
 {
 	SOCKET soc = INVALID_SOCKET;
 	soc = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (soc == INVALID_SOCKET) {
 		cout << "Error at socket(): " << WSAGetLastError() << endl;
 		WSACleanup();
+		throw InvalidSocketException();
 		return 0;
 	}
 	else {
-		cout << "socket() is OK!" << endl;
+		cout << "socketSetup is OK!" << endl;
 		return soc;
 	}
 }
@@ -66,9 +64,8 @@ sockaddr_in Comms::setupService(int port, string ipAddr)
 	return s;
 }
 
-int Comms::destroy(SOCKET socket)
+int Comms::destroy()
 {
-	closesocket(socket);
 	WSACleanup();
 	return 0;
 }

@@ -1,72 +1,73 @@
 #include "Client.h"
 
 int Client::Connect() {
-	PARAMETERS params;
+	PARAMETERS connectionParameters;
 	sockaddr_in service;
 	SOCKET clientSocket;
 
 	int port = this->getPort();
 	string addr = this->getAddr();
-
-	this->DLLFinder();
-	clientSocket = this->setupSocket();
+	this->WinsockSetup();
+	clientSocket = this->socketSetup();
 	service = this->setupService(port, addr);
 	this->establishConnection(clientSocket, service);
 
 	cout << "You've connected to a client. Please enter a display name: ";
 	cin >> this->name;
 
-	
-	params.socket = (LPVOID)clientSocket;
-	params.inst = this;
-	params.sizeOf = sizeof(Client);
-	params.name = this->name;
-	params.port = port;
-	params.ipAddr = addr;
-	CreateThread(NULL, 0, this->ClientThreadedSender, &params, 0, 0);
+
+	connectionParameters.port = port;
+	connectionParameters.ipAddr = addr;
+	connectionParameters.socket = (LPVOID)clientSocket;
+	connectionParameters.inst = this;
+	connectionParameters.sizeOf = sizeof(Client);
+	connectionParameters.name = this->name;
+
+	CreateThread(NULL, 0, this->ClientThreadedSender, &connectionParameters, 0, 0);
 	
 	int recvByteCount = 0;
 	while (true) {
 		Sleep(500);
-		this->recvSocket<PARAMETERS>((SOCKET)params.socket, params, recvByteCount);
+		this->recvSocket<PARAMETERS>(connectionParameters, recvByteCount);
 	}
 
-	return this->destroy((SOCKET)params.socket);
+	return this->destroy();
 }
 
-int Client::establishConnection(SOCKET socket, sockaddr_in service)
+void Client::establishConnection(SOCKET socket, sockaddr_in service)
 {
 	if (connect(socket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
-		cout << "Client: connect() - Failed to connect." << endl;
 		WSACleanup();
-		return 0;
+		throw ConnectException();
 	}
-	return 1;
 }
 
-DWORD WINAPI Client::ClientThreadedSender(void * param)
+DWORD WINAPI Client::ClientThreadedSender(void * parameters)
 {
-	PARAMETERS* params = (PARAMETERS*)param;
+	PARAMETERS* params = (PARAMETERS*)parameters;
 	SOCKET socket = (SOCKET)params->socket;
 	Client client(params->port, params->ipAddr);
 	string msg;
 	int sendByteCount = 0;
-	while (client.terminate == false) {
+	while (true) {
 		Sleep(500);
 		sendByteCount = send(socket, (char *)&client, sizeof(Client), 0);
-		if (sendByteCount == SOCKET_ERROR) {
-			cout << "Client send error " << WSAGetLastError() << endl;
-			break;
-		}
-		else {
-			cin >> msg;
-			client.message = params->name + ": " + msg;
-			if (msg == "QUIT") {
-				client.terminate = true;
-				exit(0);
+		if (socket != INVALID_SOCKET) {
+			if (sendByteCount == SOCKET_ERROR) {
+				WSAGetLastError();
+				closesocket(socket);
+				throw SendException();
+			}
+			else {
+				cin >> msg;
+				client.message = params->name + ": " + msg;
+				if (msg == "QUIT") {
+					exit(0);
+				}
 			}
 		}
+		else {
+			throw InvalidSocketException();
+		}
 	}
-	closesocket(socket);
-	return 0;
 };
